@@ -25,7 +25,6 @@ static std::mt19937 gen(rd());
 template <typename T>
 Graph<T> randomMaze(DisjointSet<T> &ds, int rows, int columns)
 {
-
     // create graph
     Graph<T> graph;
     graph.n = rows * columns;
@@ -82,4 +81,20 @@ Graph<T> randomMaze(DisjointSet<T> &ds, int rows, int columns)
 
     return graph;
     
+}
+
+// random maze generator with forest disjoint set
+template <typename T>
+Graph<T> randomMazeForest(int rows, int columns)
+{
+    ForestsDisjointSet<T> ds(rows * columns);
+    return randomMaze(ds, rows, columns);
+}
+
+// random maze generator with linked list disjoint set
+template <typename T>
+Graph<T> randomMazeLists(int rows, int columns)
+{
+    ListDisjointSet<T> ds(rows * columns);
+    return randomMaze(ds, rows, columns);
 }
