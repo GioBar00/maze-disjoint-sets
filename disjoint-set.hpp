@@ -37,9 +37,12 @@ struct ForestsDisjointSet : DisjointSet<T>
 
     T find(T x) override
     {
-        if (parent[x] != x)
-            parent[x] = find(parent[x]);
-        return parent[x];
+        while (x != parent[x])
+        {
+            parent[x] = parent[parent[x]];
+            x = parent[x];
+        }
+        return x;
     }
 
     void unite(T x, T y) override

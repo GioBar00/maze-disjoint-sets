@@ -44,3 +44,5 @@ Thumbs.db
 .Trashes
 
 .vscode/*
+
+benchmark/*
