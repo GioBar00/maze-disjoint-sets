@@ -15,7 +15,7 @@ template <typename T>
 struct Graph
 {
     int n; // number of nodes
-    std::vector<Edge<T>> edges;
+    std::vector<Edge<T> > edges;
 };
 
 static std::random_device rd;
@@ -23,12 +23,8 @@ static std::mt19937 gen(rd());
 
 // random maze generator with disjoint set
 template <typename T>
-Graph<T> randomMaze(DisjointSet<T> &ds, int rows, int columns)
+void randomMaze(DisjointSet<T> &ds, int rows, int columns)
 {
-    // create graph
-    Graph<T> graph;
-    graph.n = rows * columns;
-
     // random number generator
     std::uniform_int_distribution<> rnd(0, rows * columns - 1);
 
@@ -41,33 +37,6 @@ Graph<T> randomMaze(DisjointSet<T> &ds, int rows, int columns)
         int cell = rnd(gen);
         // generate adjacent cell in the direction
         int adjacent = cell;
-        /*
-        // generate random direction
-        int direction = rnd(gen) % 4;
-        switch (direction)
-        {
-            // left
-            case 0:
-                if (cell % columns != 0)
-                    adjacent--;
-                break;
-            // right
-            case 1:
-                if (cell % columns != columns - 1)
-                    adjacent++;
-                break;
-            // up
-            case 2:
-                if (cell >= columns)
-                    adjacent -= columns;
-                break;
-            // down
-            case 3:
-                if (cell < rows * columns - columns)
-                    adjacent += columns;
-                break;
-        }
-        */
         // remove not available directions
         int availableDirections[4] = {0, 1, 2, 3};
         int availableDirectionsCount = 4;
@@ -128,31 +97,60 @@ Graph<T> randomMaze(DisjointSet<T> &ds, int rows, int columns)
 
         // remove wall between cell and adjacent
         if (!ds.same(cell, adjacent))
-        {
             ds.unite(cell, adjacent);
+    }
+}
+
+/*
+template <typename T>
+Graph<T> randomMaze(Graph<T> fullGraph, DisjointSet<T> &ds, int rows, int columns)
+{
+    // create graph
+    Graph<T> graph;
+    graph.n = rows * columns;
+
+    // random number generator
+    std::uniform_int_distribution<> rnd(0, rows * columns - 1);
+
+    int start = 0;
+    int end = rows * columns - 1;
+
+    while (!ds.same(start, end))
+    {
+        // get random edge
+        int edgeIndex = rnd(gen) % fullGraph.edges.size();
+        Edge<T> edge = fullGraph.edges[edgeIndex];
+        // remove edge from full graph
+        fullGraph.edges.erase(fullGraph.edges.begin() + edgeIndex);
+
+
+        // remove wall between cell and adjacent
+        if (!ds.same(edge.from, edge.to))
+        {
+            ds.unite(edge.from, edge.to);
             // generate edge
-            Edge<T> edge;
-            edge.from = cell;
-            edge.to = adjacent;
             graph.edges.push_back(edge);
         }
     }
 
     return graph;
 }
+*/
 
 // random maze generator with forest disjoint set
 template <typename T>
-Graph<T> randomMazeForest(int rows, int columns)
+ForestsDisjointSet<T> randomMazeForest(int rows, int columns)
 {
     ForestsDisjointSet<T> ds(rows * columns);
-    return randomMaze(ds, rows, columns);
+    randomMaze(ds, rows, columns);
+    return ds;
 }
 
 // random maze generator with linked list disjoint set
 template <typename T>
-Graph<T> randomMazeLists(int rows, int columns)
+ListDisjointSet<T> randomMazeLists(int rows, int columns)
 {
     ListDisjointSet<T> ds(rows * columns);
-    return randomMaze(ds, rows, columns);
+    randomMaze(ds, rows, columns);
+    return ds;
 }
