@@ -1,155 +1,128 @@
 #include <vector>
 #include <random>
 #include "disjoint-set.hpp"
-
-// edge template
-template <typename T>
-struct Edge
-{
-    T from;
-    T to;
-};
-
-// graph template (edge list)
-template <typename T>
-struct Graph
-{
-    int n; // number of nodes
-    std::vector<Edge<T> > edges;
-};
+#include "maze.hpp"
 
 static std::random_device rd;
 static std::mt19937 gen(rd());
 
-// random maze generator with disjoint set
-template <typename T>
-void randomMaze(DisjointSet<T> &ds, int rows, int columns)
-{
-    // random number generator
-    std::uniform_int_distribution<> rnd(0, rows * columns - 1);
-
+// random maze generator with disjoint set with implied maze
+template<typename T>
+void randomMaze(DisjointSet<T> &ds, int rows, int columns) {
+    int n = rows * columns;
     int start = 0;
-    int end = rows * columns - 1;
+    int end = n - 1;
 
-    while (!ds.same(start, end))
-    {
+    // random number generator
+    std::uniform_int_distribution<> rnd(start, end);
+
+    while (!ds.same(start, end)) {
         // generate random cell
         int cell = rnd(gen);
-        // generate adjacent cell in the direction
-        int adjacent = cell;
-        // remove not available directions
-        int availableDirections[4] = {0, 1, 2, 3};
-        int availableDirectionsCount = 4;
-        if (cell % columns == 0)
-        {
-            availableDirections[0] = -1;
-            availableDirectionsCount--;
-        }
-        if (cell % columns == columns - 1)
-        {
-            availableDirections[1] = -1;
-            availableDirectionsCount--;
-        }
-        if (cell < columns)
-        {
-            availableDirections[2] = -1;
-            availableDirectionsCount--;
-        }
-        if (cell >= rows * columns - columns)
-        {
-            availableDirections[3] = -1;
-            availableDirectionsCount--;
-        }
 
-        // generate random direction
-        int direction = rnd(gen) % availableDirectionsCount;
-        for (int i = 0; i < 4; i++)
-        {
-            if (availableDirections[i] == -1)
-                continue;
-            if (direction == 0)
-            {
-                direction = i;
-                break;
-            }
-            direction--;
-        }
+        // available neighbors
+        int availableNeighbors[4];
+        int availableNeighborsCount = 0;
+        // check left
+        if (cell % columns != 0 && !ds.same(cell - 1, cell))
+            availableNeighbors[availableNeighborsCount++] = cell - 1;
+        // check right
+        if (cell % columns != columns - 1 && !ds.same(cell, cell + 1))
+            availableNeighbors[availableNeighborsCount++] = cell + 1;
+        // check up
+        if (cell >= columns && !ds.same(cell - columns, cell))
+            availableNeighbors[availableNeighborsCount++] = cell - columns;
+        // check down
+        if (cell < n - columns && !ds.same(cell, cell + columns))
+            availableNeighbors[availableNeighborsCount++] = cell + columns;
 
-        switch (direction)
-        {
-        // left
-        case 0:
-            adjacent--;
-            break;
-        // right
-        case 1:
-            adjacent++;
-            break;
-        // up
-        case 2:
-            adjacent -= columns;
-            break;
-        // down
-        case 3:
-            adjacent += columns;
-            break;
-        }
+        if (availableNeighborsCount == 0)
+            continue;
+        // generate random neighbor
+        int neighbor = availableNeighbors[rnd(gen) % availableNeighborsCount];
 
-        // remove wall between cell and adjacent
-        if (!ds.same(cell, adjacent))
-            ds.unite(cell, adjacent);
+        // remove wall between cell and adjacent by uniting the sets
+        ds.unite(cell, neighbor);
     }
 }
 
-/*
-template <typename T>
-Graph<T> randomMaze(Graph<T> fullGraph, DisjointSet<T> &ds, int rows, int columns)
-{
-    // create graph
-    Graph<T> graph;
-    graph.n = rows * columns;
+// random maze generator with disjoint set using maze class
+template<typename T>
+void randomMaze(Maze<T> &maze, DisjointSet<T> &ds) {
+    int columns = maze.getColumns();
+    int n = maze.getColumns() * maze.getRows();
+    int start = 0;
+    int end = n - 1;
 
     // random number generator
-    std::uniform_int_distribution<> rnd(0, rows * columns - 1);
+    std::uniform_int_distribution<> rnd(start, end);
 
-    int start = 0;
-    int end = rows * columns - 1;
+    while (!ds.same(start, end)) {
+        // generate random cell
+        int cell = rnd(gen);
 
-    while (!ds.same(start, end))
-    {
-        // get random edge
-        int edgeIndex = rnd(gen) % fullGraph.edges.size();
-        Edge<T> edge = fullGraph.edges[edgeIndex];
-        // remove edge from full graph
-        fullGraph.edges.erase(fullGraph.edges.begin() + edgeIndex);
+        // available neighbors
+        int availableNeighbors[4];
+        int availableNeighborsCount = 0;
+        // check left
+        if (cell % columns != 0 && !ds.same(cell - 1, cell))
+            availableNeighbors[availableNeighborsCount++] = cell - 1;
+        // check right
+        if (cell % columns != columns - 1 && !ds.same(cell, cell + 1))
+            availableNeighbors[availableNeighborsCount++] = cell + 1;
+        // check up
+        if (cell >= columns && !ds.same(cell - columns, cell))
+            availableNeighbors[availableNeighborsCount++] = cell - columns;
+        // check down
+        if (cell < n - columns && !ds.same(cell, cell + columns))
+            availableNeighbors[availableNeighborsCount++] = cell + columns;
 
+        if (availableNeighborsCount == 0)
+            continue;
+        // generate random neighbor
+        int neighbor = availableNeighbors[rnd(gen) % availableNeighborsCount];
 
         // remove wall between cell and adjacent
-        if (!ds.same(edge.from, edge.to))
-        {
-            ds.unite(edge.from, edge.to);
-            // generate edge
-            graph.edges.push_back(edge);
+        if (!ds.same(cell, neighbor)) {
+            ds.unite(cell, neighbor);
+            maze.removeWall(cell, neighbor);
         }
-    }
 
-    return graph;
+    }
 }
-*/
+
+
+// random maze generator with forest disjoint set using maze class
+template<typename T>
+Maze<T> randomMazeForest(int rows, int columns) {
+    ForestsDisjointSet<T> ds(rows * columns);
+    //randomMaze(ds, rows, columns);
+    Maze<T> maze(rows, columns);
+    randomMaze(maze, ds);
+    return maze;
+}
 
 // random maze generator with forest disjoint set
-template <typename T>
-ForestsDisjointSet<T> randomMazeForest(int rows, int columns)
-{
+template<typename T>
+ForestsDisjointSet<T> randomMazeForestSet(int rows, int columns) {
     ForestsDisjointSet<T> ds(rows * columns);
     randomMaze(ds, rows, columns);
     return ds;
 }
 
+// random maze generator with linked list disjoint set using maze class
+template<typename T>
+Maze<T> randomMazeList(int rows, int columns) {
+    ListDisjointSet<T> ds(rows * columns);
+    //randomMaze(ds, rows, columns);
+    Maze<T> maze(rows, columns);
+    randomMaze(maze, ds);
+    return maze;
+}
+
 // random maze generator with linked list disjoint set
-template <typename T>
-ListDisjointSet<T> randomMazeLists(int rows, int columns)
-{
+template<typename T>
+ListDisjointSet<T> randomMazeListSet(int rows, int columns) {
     ListDisjointSet<T> ds(rows * columns);
     randomMaze(ds, rows, columns);
     return ds;

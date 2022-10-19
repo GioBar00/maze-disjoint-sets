@@ -1,16 +1,16 @@
 #include <vector>
 
 // disjoint set abstract template
-template <typename T>
-struct DisjointSet
-{
+template<typename T>
+struct DisjointSet {
+    // finds the representative of x
     virtual T find(T x) = 0;
 
+    // merges the sets containing x and y
     virtual void unite(T x, T y) = 0;
 
     // check if x and y are in the same set
-    bool same(T x, T y)
-    {
+    bool same(T x, T y) {
         if (x == y)
             return true;
         return find(x) == find(y);
@@ -18,35 +18,31 @@ struct DisjointSet
 };
 
 // disjoint set template with union by rank and path compression
-template <typename T>
-struct ForestsDisjointSet : DisjointSet<T>
-{
+template<typename T>
+struct ForestsDisjointSet : DisjointSet<T> {
+    // list of parents
     std::vector<T> parent;
+
     std::vector<int> rank;
 
-    ForestsDisjointSet(int n)
-    {
+    explicit ForestsDisjointSet(int n) {
         parent.resize(n);
         rank.resize(n);
-        for (int i = 0; i < n; i++)
-        {
+        for (int i = 0; i < n; i++) {
             parent[i] = i;
             rank[i] = 0;
         }
     }
 
-    T find(T x) override
-    {
-        while (x != parent[x])
-        {
+    T find(T x) override {
+        while (x != parent[x]) {
             parent[x] = parent[parent[x]];
             x = parent[x];
         }
         return x;
     }
 
-    void unite(T x, T y) override
-    {
+    void unite(T x, T y) override {
         T root_x = find(x);
         T root_y = find(y);
         if (root_x == root_y)
@@ -55,8 +51,7 @@ struct ForestsDisjointSet : DisjointSet<T>
             parent[root_x] = root_y;
         else if (rank[root_x] > rank[root_y])
             parent[root_y] = root_x;
-        else
-        {
+        else {
             parent[root_y] = root_x;
             rank[root_x]++;
         }
@@ -64,37 +59,32 @@ struct ForestsDisjointSet : DisjointSet<T>
 };
 
 // set for disjoint set using linked list
-template <typename T>
+template<typename T>
 struct Set;
 
 // node for disjoint set with linked list
-template <typename T>
-struct Node
-{
+template<typename T>
+struct Node {
     T data;
     Node<T> *next;
     Set<T> *set;
 };
 
-template <typename T>
-struct Set
-{
+template<typename T>
+struct Set {
     Node<T> *head;
     Node<T> *tail;
 };
 
-//TODO: disjoint set template using linked list
-template <typename T>
-struct ListDisjointSet : DisjointSet<T>
-{
+// disjoint set template using linked list
+template<typename T>
+struct ListDisjointSet : DisjointSet<T> {
     std::vector<Node<T> *> nodes;
 
-    ListDisjointSet(int n)
-    {
+    explicit ListDisjointSet(int n) {
         nodes.resize(n);
-        for (int i = 0; i < n; i++)
-        {
-            Node<T> *node = new Node<T>;
+        for (int i = 0; i < n; i++) {
+            auto *node = new Node<T>;
             node->data = i;
             node->next = nullptr;
             node->set = new Set<T>;
@@ -104,13 +94,11 @@ struct ListDisjointSet : DisjointSet<T>
         }
     }
 
-    T find(T x) override
-    {
+    T find(T x) override {
         return nodes[x]->set->head->data;
     }
 
-    void unite(T x, T y) override
-    {
+    void unite(T x, T y) override {
         Node<T> *node_x = nodes[x];
         Node<T> *node_y = nodes[y];
         if (node_x->set == node_y->set)
@@ -118,8 +106,7 @@ struct ListDisjointSet : DisjointSet<T>
         node_x->set->tail->next = node_y->set->head;
         node_x->set->tail = node_y->set->tail;
         Node<T> *node = node_y->set->head;
-        while (node != nullptr)
-        {
+        while (node != nullptr) {
             node->set = node_x->set;
             node = node->next;
         }
